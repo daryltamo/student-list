@@ -1,0 +1,67 @@
+version: "3.9"
+services:
+
+  pozos-registry-server:
+    container_name: pozos-registry-server
+    image: registry:3
+    ports:
+      - 5000:5000
+    environment:
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '[http://registry.pozos.com]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials: '[true]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers: '[Authorization,Accept,Cache-Control]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers: '[Docker-Content-Digest]'
+      REGISTRY_STORAGE_DELETE_ENABLED: 'true'
+      REGISTRY_AUTH: 'htpasswd'
+      REGISTRY_AUTH_HTPASSWD_REALM: 'Registry Realm'
+      REGISTRY_AUTH_HTPASSWD_PATH: '/auth/htpasswd'
+    command:
+      - /bin/sh
+      - -c
+      - 'apk add --no-cache apache2-utils && htpasswd -Bbn pozos change-me > /auth/htpasswd && registry serve /etc/docker/registry/config.yml'
+    volumes:
+      - /opt/docker/registry:/var/lib/registry
+      - ./registry/auth:/auth
+    networks:
+      - pozos_registry_network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+      restart_policy:
+        condition: on-failure
+
+  pozos-registry-ui:
+    container_name: pozos-registry-ui
+    image: joxit/docker-registry-ui:main
+    ports:
+      - 8080:80
+    depends_on:
+      - pozos-registry-server
+    environment:
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE=Pozos Docker Registry
+      - DELETE_IMAGES=true
+      - SHOW_CONTENT_DIGEST=true
+      - NGINX_PROXY_PASS_URL=http://pozos-registry-server:5000
+      - SHOW_CATALOG_NB_TAGS=true
+      - CATALOG_MIN_BRANCHES=1
+      - CATALOG_MAX_BRANCHES=1
+      - TAGLIST_PAGE_SIZE=100
+      - REGISTRY_SECURED=false
+      - CATALOG_ELEMENTS_LIMIT=1000
+    networks:
+      - pozos_registry_network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+networks:
+  pozos_registry_network:
+    name: pozos_registry_network
+    driver: bridge

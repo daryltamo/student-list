@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  pozos_api:
+    container_name: pozos_api
+    image: pozos_api:1.0
+    build: ./simple_api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./simple_api/student_age.json:/data/student_age.json
+    networks:
+      - pozos_network
+
+  pozos_frontend:
+    container_name: pozos_frontend
+    image: php:apache
+    depends_on:
+      - pozos_api
+    ports:
+      - "80:80"
+    volumes:
+      - ./website:/var/www/html
+    environment:
+      - USERNAME=toto
+      - PASSWORD=python
+    networks:
+      - pozos_network
+
+networks:
+  pozos_network:
+    name: pozos_network
+    driver: bridge
