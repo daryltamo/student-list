@@ -1,11 +1,10 @@
-version: "3.9"
 services:
 
   pozos-registry-server:
     container_name: pozos-registry-server
     image: registry:3
     ports:
-      - 5000:5000
+      - 5001:5000
     environment:
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '[http://registry.pozos.com]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'

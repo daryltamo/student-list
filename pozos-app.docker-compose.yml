@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   pozos_api:
     container_name: pozos_api
